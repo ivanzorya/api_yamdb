@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -7,10 +8,22 @@ from .models import User
 
 
 class UserAllSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(
+        allow_blank=False,
+        validators=[UniqueValidator(queryset=User.objects.all())]
+    )
 
     class Meta:
         model = User
-        fields = '__all__'
+        fields = (
+            'first_name',
+            'last_name',
+            'username',
+            'bio',
+            'email',
+            'role'
+        )
+
 
 class UserSerializer(serializers.ModelSerializer):
 
@@ -45,4 +58,6 @@ class TokenObtainPairWithoutPasswordSerializer(TokenObtainPairSerializer):
             refresh = self.get_token(self.user)
             data = {'token': str(refresh.access_token)}
         return data
+
+
 

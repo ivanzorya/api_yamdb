@@ -28,23 +28,26 @@ class UserManager(BaseUserManager):
 
 
 class User(SimpleEmailConfirmationUserMixin, AbstractBaseUser):
-    USER_TYPE_CHOICES = (
-        (1, 'user'),
-        (2, 'moderator'),
-        (3, 'admin'),
-        (4, 'admin_django'),
-    )
+
+    class Role(models.TextChoices):
+        USER = 'user'
+        MODERATOR = 'moderator'
+        ADMIN = 'admin'
+
     first_name = models.TextField(null=True)
     last_name = models.TextField(null=True)
-    username = models.TextField(null=True)
+    username = models.TextField(null=True, unique=True)
     bio = models.TextField(null=True)
     email = models.EmailField(
         verbose_name='email address',
         max_length=255,
         unique=True,
     )
-    role = models.PositiveSmallIntegerField(choices=USER_TYPE_CHOICES, default=1)
-    is_active = models.BooleanField(default=True)
+    role = models.CharField(
+        max_length=10,
+        choices=Role.choices,
+        default=Role.USER,
+    )
     is_admin = models.BooleanField(default=False)
 
     objects = UserManager()
@@ -64,3 +67,6 @@ class User(SimpleEmailConfirmationUserMixin, AbstractBaseUser):
     @property
     def is_staff(self):
         return self.is_admin
+
+
+
