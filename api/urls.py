@@ -3,7 +3,7 @@ from rest_framework.routers import Route, SimpleRouter
 from rest_framework_simplejwt.views import (TokenObtainPairView,
                                             TokenRefreshView)
 
-from .views import CategoryViewSet
+from .views import CategoryViewSet, GenreViewSet
 
 
 class CustomCategoryRouter(SimpleRouter):
@@ -30,6 +30,7 @@ class CustomCategoryRouter(SimpleRouter):
 
 v1_router = CustomCategoryRouter()
 v1_router.register(r'categories', CategoryViewSet)
+v1_router.register(r'genres', GenreViewSet)
 
 urlpatterns = [
     path('v1/', include(v1_router.urls)),
