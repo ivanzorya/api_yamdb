@@ -5,12 +5,18 @@ from django.contrib.auth.forms import ReadOnlyPasswordHashField
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 
-from .models import User
+from .models import User, Comment, Review, Title, Category, Genre, Rate
 
 
 class UserCreationForm(forms.ModelForm):
-    password1 = forms.CharField(label='Password', widget=forms.PasswordInput)
-    password2 = forms.CharField(label='Password confirmation', widget=forms.PasswordInput)
+    password1 = forms.CharField(
+        label='Password',
+        widget=forms.PasswordInput
+    )
+    password2 = forms.CharField(
+        label='Password confirmation',
+        widget=forms.PasswordInput
+    )
 
     class Meta:
         model = User
@@ -62,11 +68,42 @@ class UserAdmin(BaseUserAdmin):
     filter_horizontal = ()
     list_editable = ('role', 'username')
 
+
 class RoleAdmin(admin.ModelAdmin):
     list_display = ("pk", "title")
     list_filter = ("title",)
     empty_value_display = "-пусто-"
 
 
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ("pk", "title_id", "text", "author", "score", "pub_date")
+
+
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ("pk", "review_id", "text", "author", "pub_date")
+
+
+class RateAdmin(admin.ModelAdmin):
+    list_display = ("pk", "title_id", "sum_vote", "count_vote")
+
+
+class TitleAdmin(admin.ModelAdmin):
+    list_display = ("pk", "name", "year", "rating", "description", "category")
+
+
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ("pk", "name", "slug")
+
+
+class GenreAdmin(admin.ModelAdmin):
+    list_display = ("pk", "name", "slug")
+
+
+admin.site.register(Category, CategoryAdmin)
+admin.site.register(Genre, GenreAdmin)
+admin.site.register(Title, TitleAdmin)
+admin.site.register(Rate, RateAdmin)
+admin.site.register(Review, ReviewAdmin)
+admin.site.register(Comment, CommentAdmin)
 admin.site.register(User, UserAdmin)
 admin.site.unregister(Group)

@@ -1,6 +1,4 @@
-from django.contrib.auth.models import AnonymousUser
 from rest_framework import permissions
-from rest_framework.response import Response
 
 
 class IsOwner(permissions.BasePermission):
@@ -9,10 +7,31 @@ class IsOwner(permissions.BasePermission):
 
 class IsAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
-        if AnonymousUser:
-            return Response({'123'}, status=400)
-        return request.user.role == 'admin'
+        return request.user.is_staff or request.user.role == 'admin'
 
-class IsModerator(permissions.BasePermission):
+class IsAdminSave(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.role == 'moderator'
+        return request.method in permissions.SAFE_METHODS \
+               or request.user.is_staff \
+               or request.user.role == 'admin'
+
+class ReviewAndComment(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.method == 'GET':
+            return True
+        elif request.method == 'POST':
+            return request.user.is_authenticated
+        elif request.method == 'PATCH':
+            return True
+        elif request.method == 'DELETE':
+            return True
+
+    def has_object_permission(self, request, view, obj):
+        if request.method == 'GET':
+            return True
+        elif request.method == 'PATCH' or request.method == 'DELETE':
+            return obj.author == request.user or request.user.role in [
+                'moderator', 'admin']
+
+
+

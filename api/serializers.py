@@ -4,7 +4,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .custom_authentication import AuthenticationWithoutPassword
-from .models import User
+from .models import User, Review, Comment, Category, Genre, Title
 
 
 class UserAllSerializer(serializers.ModelSerializer):
@@ -32,7 +32,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('email', )
 
 
-class TokenObtainPairWithoutPasswordSerializer(TokenObtainPairSerializer):
+class TokenWithoutPasswordSerializer(TokenObtainPairSerializer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -51,7 +51,9 @@ class TokenObtainPairWithoutPasswordSerializer(TokenObtainPairSerializer):
             authenticate_kwargs['request'] = self.context['request']
         except KeyError:
             pass
-        self.user = AuthenticationWithoutPassword().authenticate(**authenticate_kwargs)
+        self.user = AuthenticationWithoutPassword().authenticate(
+            **authenticate_kwargs
+        )
         if self.user.confirmation_key != self.request_code:
             data = {'error': 'confirmation_code is not valid'}
         else:
@@ -59,5 +61,63 @@ class TokenObtainPairWithoutPasswordSerializer(TokenObtainPairSerializer):
             data = {'token': str(refresh.access_token)}
         return data
 
+
+class ReviewSerializer(serializers.ModelSerializer):
+    title_id = serializers.SlugRelatedField(
+        many=False,
+        slug_field='pk',
+        read_only=True
+    )
+    author = serializers.SlugRelatedField(
+        many=False,
+        slug_field='username',
+        read_only=True,
+    )
+
+    class Meta:
+        fields = ('id', 'title_id', 'text', 'author', 'score', 'pub_date')
+        model = Review
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True
+    )
+
+    class Meta:
+        fields = ('id', 'text', 'author', 'pub_date')
+        model = Comment
+
+
+class GenreSerializer(serializers.ModelSerializer):
+    slug = serializers.CharField(
+        allow_blank=False,
+        validators=[UniqueValidator(queryset=Genre.objects.all())]
+    )
+
+    class Meta:
+        fields = ('name', 'slug')
+        model = Genre
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    slug = serializers.CharField(
+        allow_blank=False,
+        validators=[UniqueValidator(queryset=Category.objects.all())]
+    )
+
+    class Meta:
+        fields = ('name', 'slug')
+        model = Category
+
+
+class TitleSerializer(serializers.ModelSerializer):
+    genre = GenreSerializer(many=True, read_only=True)
+    category = CategorySerializer(many=False, read_only=True)
+
+    class Meta:
+        fields = '__all__'
+        model = Title
 
 

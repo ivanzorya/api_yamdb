@@ -94,6 +94,7 @@ class Test01UserAPI:
             'role': 'user',
             'email': 'testuser@yamdb.fake'
         }
+        print(response)
         response = user_client.post('/api/v1/users/', data=data)
         assert response.status_code == 400, \
             'Проверьте, что при POST запросе `/api/v1/users/` с не правильными данными возвращает 400. ' \
@@ -142,6 +143,7 @@ class Test01UserAPI:
     def test_06_users_username_get_auth(self, user_client, admin):
         user, moderator = create_users_api(user_client)
         response = user_client.get(f'/api/v1/users/{admin.username}/')
+        print(response)
         assert response.status_code != 404, \
             'Страница `/api/v1/users/{username}/` не найдена, проверьте этот адрес в *urls.py*'
         assert response.status_code == 200, \
