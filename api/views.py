@@ -194,7 +194,7 @@ class TitleViewSet(viewsets.ModelViewSet):
 
     def check_category_genre(self,):
         if self.request.data.get('category'):
-            category = Category.objects.get(
+            category = Category.objects.filter(
                 slug=self.request.data.get('category'))
             if not category:
                 raise serializers.ValidationError(
@@ -216,7 +216,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         category, genres = self.check_category_genre()
         if category:
-            serializer.save(category=category, genre=genres)
+            serializer.save(category=category[0], genre=genres)
         else:
             serializer.save(genre=genres)
         Rate.objects.create(
@@ -228,7 +228,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         category, genres = self.check_category_genre()
         if category:
-            serializer.save(category=category)
+            serializer.save(category=category[0])
         title = get_object_or_404(Title, pk=self.kwargs.get('pk'))
         for genre in genres:
             title.genre.add(get_object_or_404(Genre, slug=genre))
