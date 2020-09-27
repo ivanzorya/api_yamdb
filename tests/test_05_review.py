@@ -181,6 +181,8 @@ class Test05ReviewAPI:
             'score': 1
         }
         response = client_user.patch(f'/api/v1/titles/{titles[0]["id"]}/reviews/{reviews[2]["id"]}/', data=data)
+        response1 = client_user.get(f'/api/v1/titles/{titles[0]["id"]}/reviews/{reviews[2]["id"]}/', data=data)
+        print(response1.json())
         assert response.status_code == 403, \
             'Проверьте, что при PATCH запросе `/api/v1/titles/{title_id}/reviews/{review_id}/` ' \
             'от обычного пользователя при попытки изменить не свой отзыв возвращается статус 403'
@@ -189,6 +191,8 @@ class Test05ReviewAPI:
             'text': 'jdfk',
             'score': 7
         }
+        response = client_user.get(f'/api/v1/titles/{titles[0]["id"]}/reviews/{reviews[1]["id"]}/', data=data)
+        print(response.json())
         response = client_user.patch(f'/api/v1/titles/{titles[0]["id"]}/reviews/{reviews[1]["id"]}/', data=data)
         assert response.status_code == 200, \
             'Проверьте, что при PATCH запросе `/api/v1/titles/{title_id}/reviews/{review_id}/` ' \
