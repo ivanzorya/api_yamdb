@@ -30,6 +30,7 @@ class CustomUserRouter(SimpleRouter):
         ),
     ]
 
+
 class CustomCategoryGenreRouter(SimpleRouter):
     routes = [
         Route(
@@ -72,17 +73,13 @@ router_review_comment_title.register(
 
 
 urlpatterns = [
-    path('users/me/', APIUserDetail.as_view()),
-    path('', include(router_user.urls)),
-    path('', include(router_review_comment_title.urls)),
-    path('', include(router_category_genre.urls)),
-    path('auth/email/', CreateUserAPIView.as_view()),
-    path('token/', MyTokenObtainPairView.as_view(),
+    path('v1/users/me/', APIUserDetail.as_view()),
+    path('v1/', include(router_user.urls)),
+    path('v1/', include(router_review_comment_title.urls)),
+    path('v1/', include(router_category_genre.urls)),
+    path('v1/auth/email/', CreateUserAPIView.as_view()),
+    path('v1/token/', MyTokenObtainPairView.as_view(),
          name='token_obtain_pair'),
-    path('token/refresh/', TokenRefreshView.as_view(),
+    path('v1/token/refresh/', TokenRefreshView.as_view(),
          name='token_refresh'),
 ]
-
-
-
-

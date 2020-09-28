@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.generics import get_object_or_404
 from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -63,7 +64,7 @@ class TokenWithoutPasswordSerializer(TokenObtainPairSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    title_id = serializers.SlugRelatedField(
+    title = serializers.SlugRelatedField(
         many=False,
         slug_field='pk',
         read_only=True
@@ -75,8 +76,14 @@ class ReviewSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        fields = ('id', 'title_id', 'text', 'author', 'score', 'pub_date')
+        fields = ('id', 'title', 'text', 'author', 'score', 'pub_date')
         model = Review
+
+    def check_review(self, review):
+        if review:
+            raise serializers.ValidationError(
+                f'You can not write second review'
+            )
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -97,7 +104,7 @@ class GenreSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        fields = ('name', 'slug')
+        exclude = ['id']
         model = Genre
 
 
@@ -108,7 +115,7 @@ class CategorySerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        fields = ('name', 'slug')
+        exclude = ['id']
         model = Category
 
 
@@ -120,4 +127,22 @@ class TitleSerializer(serializers.ModelSerializer):
         fields = '__all__'
         model = Title
 
-
+    def check_category_genre(self, category, genre):
+        if category:
+            real_category = Category.objects.filter(slug=category)
+            if not real_category:
+                raise serializers.ValidationError(
+                    f'{category} category does not exist'
+                )
+        else:
+            real_category = None
+        genres = []
+        genre_list = genre
+        for genre_slug in genre_list:
+            real_genre = Genre.objects.filter(slug=genre_slug)
+            if real_genre:
+                genres.append(get_object_or_404(Genre, slug=genre_slug))
+            else:
+                raise serializers.ValidationError(
+                    f'{genre_slug} genre does not exist')
+        return real_category, genres

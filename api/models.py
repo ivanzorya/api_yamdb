@@ -1,4 +1,7 @@
-from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+import datetime
+
+from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, \
+    AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from simple_email_confirmation.models import SimpleEmailConfirmationUserMixin
@@ -29,23 +32,34 @@ class UserManager(BaseUserManager):
         return user
 
 
+class Role(models.TextChoices):
+    USER = 'user'
+    MODERATOR = 'moderator'
+    ADMIN = 'admin'
+
+
 class User(SimpleEmailConfirmationUserMixin, AbstractBaseUser):
-
-    class Role(models.TextChoices):
-        USER = 'user'
-        MODERATOR = 'moderator'
-        ADMIN = 'admin'
-
-    first_name = models.TextField(null=True)
-    last_name = models.TextField(null=True)
-    username = models.TextField(null=True, unique=True)
-    bio = models.TextField(null=True)
+    first_name = models.TextField(
+        verbose_name='имя пользователя',
+        null=True
+    )
+    last_name = models.TextField(
+        verbose_name='фамилия пользователя',
+        null=True
+    )
+    username = models.TextField(
+        verbose_name='username пользователя',
+        null=True,
+        unique=True
+    )
+    bio = models.TextField(verbose_name='информация', null=True)
     email = models.EmailField(
         verbose_name='email address',
         max_length=255,
         unique=True,
     )
     role = models.CharField(
+        verbose_name='роль пользователя',
         max_length=10,
         choices=Role.choices,
         default=Role.USER,
@@ -72,38 +86,75 @@ class User(SimpleEmailConfirmationUserMixin, AbstractBaseUser):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=20, unique=True)
-    slug = models.SlugField(null=True, unique=True)
+    name = models.CharField(
+        verbose_name='название категории',
+        max_length=100,
+        unique=True
+    )
+    slug = models.SlugField(
+        verbose_name='slug категории',
+        null=True,
+        unique=True
+    )
+
+    class Meta:
+        ordering = ["id"]
 
     def __str__(self):
         return self.name
 
 
 class Genre(models.Model):
-    name = models.CharField(max_length=20)
-    slug = models.SlugField(null=True, unique=True)
+    name = models.CharField(
+        verbose_name='название жанра',
+        max_length=20
+    )
+    slug = models.SlugField(
+        verbose_name='slug жанра',
+        null=True,
+        unique=True
+    )
+
+    class Meta:
+        ordering = ["id"]
 
     def __str__(self):
         return self.name
 
 
+def current_year():
+    return datetime.date.today().year
+
+
+def max_value_current_year(value):
+    return MaxValueValidator(current_year())(value)
+
+
 class Title(models.Model):
-    name = models.TextField()
+    name = models.TextField(verbose_name='название', max_length=100)
     year = models.PositiveIntegerField(
+        verbose_name='год создания',
+        db_index=True,
         validators=[
             MinValueValidator(1900),
-            MaxValueValidator(2500)
+            max_value_current_year
         ]
     )
-    rating = models.PositiveIntegerField(null=True)
-    description = models.TextField(null=True)
+    rating = models.PositiveIntegerField(verbose_name='рейтинг', null=True)
+    description = models.TextField(verbose_name='описание', null=True)
     category = models.ForeignKey(
         Category,
+        related_name="titles",
+        verbose_name='категория',
         on_delete=models.SET_NULL,
         blank=True,
         null=True
     )
-    genre = models.ManyToManyField(Genre)
+    genre = models.ManyToManyField(
+        Genre,
+        related_name="titles",
+        verbose_name='жанр'
+    )
 
     class Meta:
         ordering = ["-name"]
@@ -113,55 +164,55 @@ class Title(models.Model):
 
 
 class Review(models.Model):
-
-    class Score(models.IntegerChoices):
-        ONE = 1
-        TWO = 2
-        THREE = 3
-        FOUR = 4
-        FIVE = 5
-        SIX = 6
-        SEVEN = 7
-        EIGHT = 8
-        NINE = 9
-        TEN = 10
-
-    title_id = models.ForeignKey(
+    title = models.ForeignKey(
         Title,
+        verbose_name='произведение',
+        related_name="review",
         on_delete=models.CASCADE,
         blank=True, null=True
     )
-    text = models.TextField()
+    text = models.TextField(verbose_name='отзыв')
     author = models.ForeignKey(
-        User,
+        User, verbose_name='автор отзыва',
         on_delete=models.CASCADE,
     )
-    score = models.IntegerField(choices=Score.choices)
+    score = models.PositiveIntegerField(
+        verbose_name='оценка',
+        validators=[
+            MinValueValidator(1),
+            MaxValueValidator(10)
+        ]
+    )
     pub_date = models.DateTimeField(
+        verbose_name='дата публикации',
         auto_now_add=True,
         db_index=True,
     )
 
     class Meta:
         ordering = ["-pub_date"]
-        unique_together = ('title_id', 'author')
+        unique_together = ('title', 'author')
 
     def __str__(self):
-        return self.text
+        return (f'{self.author.username} оценил '
+                f'{self.title.name} на {self.score}')
 
 
 class Comment(models.Model):
-    review_id = models.ForeignKey(
+    review = models.ForeignKey(
         Review,
+        related_name="comments",
+        verbose_name='отзыв',
         on_delete=models.CASCADE,
         null=True
     )
-    text = models.TextField()
+    text = models.TextField(verbose_name='текст комментария',)
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
     )
     pub_date = models.DateTimeField(
+        verbose_name='дата публикации',
         auto_now_add=True,
         db_index=True,
     )
@@ -174,10 +225,19 @@ class Comment(models.Model):
 
 
 class Rate(models.Model):
-    title_id = models.ForeignKey(
+    title = models.ForeignKey(
         Title,
+        verbose_name='произведение',
         on_delete=models.SET_NULL, blank=True, null=True
     )
-    sum_vote = models.PositiveIntegerField(default=0)
-    count_vote = models.PositiveIntegerField(default=0)
+    sum_vote = models.PositiveIntegerField(
+        verbose_name='сумма оценок',
+        default=0
+    )
+    count_vote = models.PositiveIntegerField(
+        verbose_name='количество оценок',
+        default=0
+    )
 
+    class Meta:
+        ordering = ["id"]
