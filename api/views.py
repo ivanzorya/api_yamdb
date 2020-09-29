@@ -2,13 +2,13 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, viewsets, serializers
+from rest_framework import status, viewsets
+from rest_framework.decorators import permission_classes, api_view
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .models import User, Review, Comment, Category, Genre, Title, Rate
@@ -25,16 +25,18 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdmin]
     lookup_field = 'username'
 
+    def get_permissions(self):
+        if self.action in ('get_me', 'update_me', 'delete_me'):
+            self.permission_classes = [IsAuthenticated, IsOwner]
+        elif self.action == 'user_registration':
+            self.permission_classes = [AllowAny, ]
+        return super(self.__class__, self).get_permissions()
 
-class APIUserDetail(APIView):
-    permission_classes = [IsAuthenticated, IsOwner]
+    def get_me(self, request):
+        return Response(self.serializer_class(request.user).data)
 
-    def get(self, request):
-        serializer = UserAllSerializer(request.user)
-        return Response(serializer.data)
-
-    def patch(self, request):
-        serializer = UserAllSerializer(
+    def update_me(self, request):
+        serializer = self.serializer_class(
             request.user,
             data=request.data,
             partial=True
@@ -44,23 +46,27 @@ class APIUserDetail(APIView):
             return Response(serializer.data, status=200)
         return Response(serializer.errors, status=400)
 
+    def delete_me(self, request):
+        user = get_object_or_404(User, email=request.user)
+        user.delete()
+        return Response(status=405)
 
-class CreateUserAPIView(APIView):
-    permission_classes = (AllowAny,)
 
-    def post(self, request):
-        user = request.data
-        serializer = UserSerializer(data=user)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        user = get_object_or_404(User, email=request.data.get('email'))
-        subject = 'Thank you for registering to YaMDB'
-        message = (f'Your confirmation code is {user.confirmation_key}.'
-                   f'Use code for token taking.')
-        email_from = settings.EMAIL_HOST_USER
-        recipient_list = [f'{user.email}', ]
-        send_mail(subject, message, email_from, recipient_list)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+@api_view(['post'])
+@permission_classes((AllowAny,))
+def post(request):
+    user = request.data
+    serializer = UserSerializer(data=user)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    user = get_object_or_404(User, email=request.data.get('email'))
+    subject = 'Thank you for registering to YaMDB'
+    message = (f'Your confirmation code is {user.confirmation_key}.'
+               f'Use code for token taking.')
+    email_from = settings.EMAIL_HOST_USER
+    recipient_list = [f'{user.email}', ]
+    send_mail(subject, message, email_from, recipient_list)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class MyTokenObtainPairView(TokenObtainPairView):
@@ -91,7 +97,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
         rate.sum_vote += serializer.data.get('score')
         rate.count_vote += 1
         rate.save()
-        title = get_object_or_404(Title, id=self.kwargs.get('title_id'))
         title.rating = rate.sum_vote // rate.count_vote
         title.save()
 

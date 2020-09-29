@@ -1,8 +1,8 @@
 import datetime
 
-from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, \
-    AbstractUser
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth.models import (AbstractBaseUser, AbstractUser,
+                                        BaseUserManager)
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from simple_email_confirmation.models import SimpleEmailConfirmationUserMixin
 
@@ -38,7 +38,7 @@ class Role(models.TextChoices):
     ADMIN = 'admin'
 
 
-class User(SimpleEmailConfirmationUserMixin, AbstractBaseUser):
+class User(SimpleEmailConfirmationUserMixin, AbstractUser):
     first_name = models.TextField(
         verbose_name='имя пользователя',
         null=True
@@ -70,9 +70,6 @@ class User(SimpleEmailConfirmationUserMixin, AbstractBaseUser):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
-
-    def __str__(self):
-        return self.email
 
     def has_perm(self, perm, obj=None):
         return True

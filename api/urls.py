@@ -2,8 +2,9 @@ from django.urls import path, include
 from rest_framework.routers import SimpleRouter, Route, DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from .views import (CreateUserAPIView, MyTokenObtainPairView, UserViewSet,
-                    APIUserDetail, ReviewViewSet, CategoryViewSet,
+from api import views
+from .views import (MyTokenObtainPairView, UserViewSet,
+                    ReviewViewSet, CategoryViewSet,
                     TitleViewSet, CommentViewSet, GenreViewSet)
 
 
@@ -19,6 +20,16 @@ class CustomUserRouter(SimpleRouter):
             initkwargs={'suffix': 'List'}
         ),
         Route(
+            url=r'^{prefix}/me/$',
+            mapping={'get': 'get_me',
+                     'patch': 'update_me',
+                     'delete': 'delete_me'
+                     },
+            name='{basename}-my_detail',
+            detail=True,
+            initkwargs={'suffix': 'My_detail'}
+        ),
+        Route(
             url=r'^{prefix}/{lookup}/$',
             mapping={'get': 'retrieve',
                      'patch': 'partial_update',
@@ -28,6 +39,7 @@ class CustomUserRouter(SimpleRouter):
             detail=True,
             initkwargs={'suffix': 'Detail'}
         ),
+
     ]
 
 
@@ -73,11 +85,10 @@ router_review_comment_title.register(
 
 
 urlpatterns = [
-    path('v1/users/me/', APIUserDetail.as_view()),
     path('v1/', include(router_user.urls)),
     path('v1/', include(router_review_comment_title.urls)),
     path('v1/', include(router_category_genre.urls)),
-    path('v1/auth/email/', CreateUserAPIView.as_view()),
+    path('v1/auth/email/', views.post),
     path('v1/token/', MyTokenObtainPairView.as_view(),
          name='token_obtain_pair'),
     path('v1/token/refresh/', TokenRefreshView.as_view(),
