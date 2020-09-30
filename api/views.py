@@ -3,7 +3,7 @@ from django.core.mail import send_mail
 from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
-from rest_framework.decorators import permission_classes, api_view
+from rest_framework.decorators import permission_classes, api_view, action
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .models import User, Review, Comment, Category, Genre, Title, Rate
-from .permissions import IsAdmin, IsOwner, IsAdminSave, ReviewAndComment
+from .permissions import IsAdmin, ReviewAndComment, UserPermission
 from .serializers import (UserSerializer, TokenWithoutPasswordSerializer,
                           UserAllSerializer, ReviewSerializer,
                           CommentSerializer, CategorySerializer,
@@ -22,19 +22,14 @@ from .serializers import (UserSerializer, TokenWithoutPasswordSerializer,
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserAllSerializer
-    permission_classes = [IsAuthenticated, IsAdmin]
+    permission_classes = [UserPermission]
     lookup_field = 'username'
 
-    def get_permissions(self):
-        if self.action in ('get_me', 'update_me', 'delete_me'):
-            self.permission_classes = [IsAuthenticated, IsOwner]
-        elif self.action == 'user_registration':
-            self.permission_classes = [AllowAny, ]
-        return super(self.__class__, self).get_permissions()
-
+    @action(detail=True)
     def get_me(self, request):
         return Response(self.serializer_class(request.user).data)
 
+    @action(detail=True, methods=['patch'])
     def update_me(self, request):
         serializer = self.serializer_class(
             request.user,
@@ -46,15 +41,14 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=200)
         return Response(serializer.errors, status=400)
 
+    @action(detail=True, methods=['delete'])
     def delete_me(self, request):
-        user = get_object_or_404(User, email=request.user)
-        user.delete()
         return Response(status=405)
 
 
 @api_view(['post'])
 @permission_classes((AllowAny,))
-def post(request):
+def send_confirmation_code(request):
     user = request.data
     serializer = UserSerializer(data=user)
     serializer.is_valid(raise_exception=True)
@@ -151,7 +145,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticatedOrReadOnly, IsAdminSave]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsAdmin]
     lookup_field = 'slug'
     filter_backends = [SearchFilter]
     search_fields = ['=name']
@@ -160,7 +154,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly, IsAdminSave]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsAdmin]
     lookup_field = 'slug'
     filter_backends = [SearchFilter]
     search_fields = ['=name']
@@ -169,7 +163,7 @@ class GenreViewSet(viewsets.ModelViewSet):
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly, IsAdminSave]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsAdmin]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['year']
 

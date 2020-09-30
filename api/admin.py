@@ -9,11 +9,11 @@ from .models import User, Comment, Review, Title, Category, Genre, Rate
 class UserAdmin(BaseUserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
-    list_display = ('email', 'is_admin', 'role', 'username')
-    list_filter = ('is_admin',)
+    list_display = ('email', 'role', 'username')
+    list_filter = ('role',)
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        ('Permissions', {'fields': ('is_admin',)}),
+        ('Permissions', {'fields': ('role',)}),
     )
     add_fieldsets = (
         (None, {
@@ -25,12 +25,6 @@ class UserAdmin(BaseUserAdmin):
     ordering = ('email',)
     filter_horizontal = ()
     list_editable = ('role', 'username')
-
-
-class RoleAdmin(admin.ModelAdmin):
-    list_display = ("pk", "title")
-    list_filter = ("title",)
-    empty_value_display = "-пусто-"
 
 
 class ReviewAdmin(admin.ModelAdmin):

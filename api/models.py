@@ -1,10 +1,10 @@
-import datetime
-
 from django.contrib.auth.models import (AbstractBaseUser, AbstractUser,
                                         BaseUserManager)
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from simple_email_confirmation.models import SimpleEmailConfirmationUserMixin
+
+from api.validators import max_value_current_year
 
 
 class UserManager(BaseUserManager):
@@ -24,7 +24,8 @@ class UserManager(BaseUserManager):
             email,
             password=password,
         )
-        user.is_admin = True
+        user.is_staff = True
+        user.role = 'admin'
         if not username:
             username = email
         user.username = username
@@ -64,7 +65,6 @@ class User(SimpleEmailConfirmationUserMixin, AbstractUser):
         choices=Role.choices,
         default=Role.USER,
     )
-    is_admin = models.BooleanField(default=False)
 
     objects = UserManager()
 
@@ -76,10 +76,6 @@ class User(SimpleEmailConfirmationUserMixin, AbstractUser):
 
     def has_module_perms(self, app_label):
         return True
-
-    @property
-    def is_staff(self):
-        return self.is_admin
 
 
 class Category(models.Model):
@@ -95,7 +91,7 @@ class Category(models.Model):
     )
 
     class Meta:
-        ordering = ["id"]
+        ordering = ["-id"]
 
     def __str__(self):
         return self.name
@@ -113,18 +109,10 @@ class Genre(models.Model):
     )
 
     class Meta:
-        ordering = ["id"]
+        ordering = ["-id"]
 
     def __str__(self):
         return self.name
-
-
-def current_year():
-    return datetime.date.today().year
-
-
-def max_value_current_year(value):
-    return MaxValueValidator(current_year())(value)
 
 
 class Title(models.Model):
@@ -237,4 +225,4 @@ class Rate(models.Model):
     )
 
     class Meta:
-        ordering = ["id"]
+        ordering = ["-id"]

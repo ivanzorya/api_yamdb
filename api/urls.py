@@ -20,16 +20,6 @@ class CustomUserRouter(SimpleRouter):
             initkwargs={'suffix': 'List'}
         ),
         Route(
-            url=r'^{prefix}/me/$',
-            mapping={'get': 'get_me',
-                     'patch': 'update_me',
-                     'delete': 'delete_me'
-                     },
-            name='{basename}-my_detail',
-            detail=True,
-            initkwargs={'suffix': 'My_detail'}
-        ),
-        Route(
             url=r'^{prefix}/{lookup}/$',
             mapping={'get': 'retrieve',
                      'patch': 'partial_update',
@@ -85,10 +75,18 @@ router_review_comment_title.register(
 
 
 urlpatterns = [
+    path('v1/users/me/', UserViewSet.as_view(
+        {
+            'get': 'get_me',
+            'patch': 'update_me',
+            'delete': 'delete_me'
+        }
+    )
+         ),
     path('v1/', include(router_user.urls)),
     path('v1/', include(router_review_comment_title.urls)),
     path('v1/', include(router_category_genre.urls)),
-    path('v1/auth/email/', views.post),
+    path('v1/auth/email/', views.send_confirmation_code),
     path('v1/token/', MyTokenObtainPairView.as_view(),
          name='token_obtain_pair'),
     path('v1/token/refresh/', TokenRefreshView.as_view(),
