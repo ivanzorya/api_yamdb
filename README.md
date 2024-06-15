@@ -6,7 +6,7 @@ The works themselves are not stored in YaMDb; you cannot watch a movie or listen
 Each category contains works: books, movies, or music. For example, in the "Books" category, there might be works like "Winnie-the-Pooh and All, All, All" and "The Martian Chronicles", while in the "Music" category, there might be the song "Recently" by the band "Insects" and Bach's Second Suite. A work can be assigned a genre from a predefined list (for example, "Fairy Tale", "Rock", or "Art House"). New genres can only be created by an administrator.
 Grateful or outraged readers leave textual reviews (Review) on works and rate the work (a score ranging from one to ten). The average rating of the work is automatically calculated from numerous scores.
 
-###User Roles
+### User Roles
 -   Anonymous — can view descriptions of works, read reviews and comments.
 -   Authenticated user (user) — can read everything like an Anonymous user, additionally can publish reviews and rate works (movies/books/songs), can comment on other users' reviews and rate them; can edit and delete their own reviews and comments.
 -   Moderator (moderator) — has the same rights as an Authenticated user plus the right to delete and edit any reviews and comments.
