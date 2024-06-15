@@ -1,39 +1,39 @@
 # api_yamdb
-### REST API для сервиса — базы отзывов о фильмах, книгах и музыке.
+### REST API for a service — a database of reviews on movies, books, and music.
 
-Проект YaMDb собирает отзывы (Review) пользователей на произведения (Title). Произведения делятся на категории: «Книги», «Фильмы», «Музыка». Список категорий (Category) может быть расширен (например, можно добавить категорию «Изобразительное искусство» или «Ювелирка»).
-Сами произведения в YaMDb не хранятся, здесь нельзя посмотреть фильм или послушать музыку.
-В каждой категории есть произведения: книги, фильмы или музыка. Например, в категории «Книги» могут быть произведения «Винни Пух и все-все-все» и «Марсианские хроники», а в категории «Музыка» — песня «Давеча» группы «Насекомые» и вторая сюита Баха. Произведению может быть присвоен жанр из списка предустановленных (например, «Сказка», «Рок» или «Артхаус»). Новые жанры может создавать только администратор.
-Благодарные или возмущённые читатели оставляют к произведениям текстовые отзывы (Review) и выставляют произведению рейтинг (оценку в диапазоне от одного до десяти). Из множества оценок автоматически высчитывается средняя оценка произведения.
+The YaMDb project collects user reviews (Review) on various works (Title). Works are divided into categories: "Books", "Movies", "Music". The list of categories (Category) can be expanded (for example, by adding a category like "Visual Arts" or "Jewelry").
+The works themselves are not stored in YaMDb; you cannot watch a movie or listen to music here.
+Each category contains works: books, movies, or music. For example, in the "Books" category, there might be works like "Winnie-the-Pooh and All, All, All" and "The Martian Chronicles", while in the "Music" category, there might be the song "Recently" by the band "Insects" and Bach's Second Suite. A work can be assigned a genre from a predefined list (for example, "Fairy Tale", "Rock", or "Art House"). New genres can only be created by an administrator.
+Grateful or outraged readers leave textual reviews (Review) on works and rate the work (a score ranging from one to ten). The average rating of the work is automatically calculated from numerous scores.
 
-### Пользовательские роли
-* Аноним — может просматривать описания произведений, читать отзывы и комментарии.
-* Аутентифицированный пользователь (user)— может читать всё, как и Аноним, дополнительно может публиковать отзывы и ставить рейтинг произведениям (фильмам/книгам/песенкам), может комментировать чужие отзывы и ставить им оценки; может редактировать и удалять свои отзывы и комментарии.
-* Модератор (moderator) — те же права, что и у Аутентифицированного пользователя плюс право удалять и редактировать любые отзывы и комментарии.
-* Администратор (admin) — полные права на управление проектом и всем его содержимым. Может создавать и удалять произведения, категории и жанры. Может назначать роли пользователям.
-* Администратор Django — те же права, что и у роли Администратор.
+###User Roles
+-   Anonymous — can view descriptions of works, read reviews and comments.
+-   Authenticated user (user) — can read everything like an Anonymous user, additionally can publish reviews and rate works (movies/books/songs), can comment on other users' reviews and rate them; can edit and delete their own reviews and comments.
+-   Moderator (moderator) — has the same rights as an Authenticated user plus the right to delete and edit any reviews and comments.
+-   Administrator (admin) — has full rights to manage the project and all its content. Can create and delete works, categories, and genres. Can assign roles to users.
+-   Django Administrator — has the same rights as the Administrator role.
 
-### Алгоритм регистрации пользователей
- - Пользователь отправляет POST-запрос с параметром email на /api/v1/auth/email/.
- - YaMDB отправляет письмо с кодом подтверждения (confirmation_code) на адрес email .
- - Пользователь отправляет POST-запрос с параметрами email и confirmation_code на /api/v1/auth/token/, в ответе на запрос ему приходит token (JWT-токен).
-Эти операции выполняются один раз, при регистрации пользователя. В результате пользователь получает токен и может работать с API, отправляя этот токен с каждым запросом.
-После регистрации и получения токена пользователь может отправить PATCH-запрос на /api/v1/users/me/ и заполнить поля в своём профайле (описание полей — в документации).
+### User Registration Algorithm
+-   The user sends a POST request with the email parameter to /api/v1/auth/email/.
+-   YaMDB sends an email with a confirmation code to the provided email address.
+-   The user sends a POST request with the email and confirmation code parameters to /api/v1/auth/token/, and in response, they receive a token (JWT token).
+-   These operations are performed once during user registration. As a result, the user receives a token and can work with the API, sending this token with each request.
+-   After registration and receiving the token, the user can send a PATCH request to /api/v1/users/me/ and fill in the fields in their profile (field descriptions are in the documentation).
 
-### Ресурсы API YaMDb
- - Ресурс AUTH: аутентификация.
- - Ресурс USERS: пользователи.
- - Ресурс TITLES: произведения, к которым пишут отзывы (определённый фильм, книга или песенка).
- - Ресурс CATEGORIES: категории (типы) произведений («Фильмы», «Книги», «Музыка»).
- - Ресурс GENRES: жанры произведений. Одно произведение может быть привязано к нескольким жанрам.
- - Ресурс REVIEWS: отзывы на произведения. Отзыв привязан к определённому произведению.
- - Ресурс COMMENTS: комментарии к отзывам. Комментарий привязан к определённому отзыву.
+### YaMDb API Resources
+-   AUTH Resource: authentication.
+-   USERS Resource: users.
+-   TITLES Resource: works to which reviews are written (a specific movie, book, or song).
+-   CATEGORIES Resource: categories (types) of works ("Movies", "Books", "Music").
+-   GENRES Resource: genres of works. A single work can be linked to several genres.
+-   REVIEWS Resource: reviews on works. A review is linked to a specific work.
+-   COMMENTS Resource: comments on reviews. A comment is linked to a specific review.
 
-#### Каждый ресурс описан в документации: указаны эндпойнты (адреса, по которым можно сделать запрос), разрешённые типы запросов, права доступа и дополнительные параметры, если это необходимо.
+### Each resource is described in the documentation: endpoints (addresses to which requests can be made), allowed request types, access rights, and additional parameters if necessary.
 
-### Связанные данные и каскадное удаление
- - При удалении объекта пользователя User удаляются все отзывы и комментарии этого пользователя (вместе с оценками-рейтингами).
- - При удалении объекта произведения Title удаляются все отзывы к этому произведению и комментарии к ним.
- - При удалении объекта категории Category не удаляются связанные с этой категорией произведения (Title).
- - При удалении объекта жанра Genre не удаляются связанные с этим жанром произведения (Title).
- - При удалении объекта отзыва Review удаляются все комментарии к этому отзыву.
+### Related Data and Cascading Deletion
+-   When a User object is deleted, all reviews and comments by this user (along with ratings) are deleted.
+-   When a Title object is deleted, all reviews and comments related to this work are deleted.
+-   When a Category object is deleted, works associated with this category (Title) are not deleted.
+-   When a Genre object is deleted, works associated with this genre (Title) are not deleted.
+-   When a Review object is deleted, all comments related to this review are deleted.
